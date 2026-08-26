@@ -2,17 +2,7 @@ const CORE_JOBS = new Set([
   "core-ui", "core-test", "core-vet", "core-l2", "core-l3", "core-blueprint-seed",
 ]);
 
-const LIVE_TESTS = [
-  ["cloud-smoke-runpod", "RunPod · 冒烟"],
-  ["cloud-full-runpod", "RunPod · 全量"],
-  ["cloud-full-autodl", "AutoDL · 全量"],
-  ["cloud-full-vast", "Vast.ai · 全量"],
-  ["cloud-full-compshare-suite", "CompShare · 单机套件"],
-  ["cloud-full-compshare-provider", "CompShare · 资源矩阵"],
-  ["cloud-full-compshare-onevm-nnode2", "CompShare · 单 VM 双节点"],
-  ["cloud-full-compshare-udocker-nnode2", "CompShare · 双 VM udocker"],
-  ["cloud-full-compshare-docker-nnode2", "CompShare · 双 VM Docker"],
-];
+const LIVE_STAGES = new Set(["cloud-smoke", "cloud-full"]);
 
 const STATUS_LABELS = {
   success: "通过", failed: "失败", running: "运行中", pending: "等待中",
@@ -111,7 +101,34 @@ function summarizeJobs(jobs, predicate) {
 }
 
 function isLiveJob(job) {
-  return LIVE_TESTS.some(function (item) { return item[0] === job.name; });
+  return LIVE_STAGES.has(job.stage);
+}
+
+function discoverLiveTests(pipelines) {
+  const tests = new Map();
+  pipelines.forEach(function (pipeline) {
+    (pipeline.jobs || []).forEach(function (job) {
+      if (isLiveJob(job) && !tests.has(job.name)) {
+        tests.set(job.name, { name: job.name, stage: job.stage });
+      }
+    });
+  });
+  const stageOrder = { "cloud-smoke": 0, "cloud-full": 1 };
+  return Array.from(tests.values()).sort(function (left, right) {
+    const stageDiff = (stageOrder[left.stage] ?? 99) - (stageOrder[right.stage] ?? 99);
+    return stageDiff || left.name.localeCompare(right.name, "en");
+  });
+}
+
+function testNameCell(test) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "test-name";
+  const name = document.createElement("code");
+  name.textContent = test.name;
+  const stage = document.createElement("small");
+  stage.textContent = test.stage;
+  wrapper.append(name, stage);
+  return cell(wrapper);
 }
 
 async function loadRelease() {
@@ -161,10 +178,10 @@ function renderLiveTests(pipelines) {
   tbody.textContent = "";
   let allSuccess = 0;
   let allEffective = 0;
+  const tests = discoverLiveTests(pipelines);
 
-  LIVE_TESTS.forEach(function (definition) {
-    const name = definition[0];
-    const label = definition[1];
+  tests.forEach(function (test) {
+    const name = test.name;
     const runs = [];
     pipelines.forEach(function (pipeline) {
       (pipeline.jobs || []).forEach(function (job) {
@@ -182,7 +199,7 @@ function renderLiveTests(pipelines) {
     allEffective += effective.length;
 
     const tr = document.createElement("tr");
-    tr.append(cell(label));
+    tr.append(testNameCell(test));
     tr.append(cell(statusBadge(latestEffective ? latestEffective.status : "none")));
     tr.append(cell(formatDate(latestSuccess ? (latestSuccess.finished_at || latestSuccess.started_at) : null)));
     tr.append(cell(formatDuration(Number(latestSuccess ? latestSuccess.duration : NaN))));
@@ -191,6 +208,15 @@ function renderLiveTests(pipelines) {
     tr.append(cell(effective.length ? Math.round((successes / effective.length) * 100) + "%" : "—"));
     tbody.append(tr);
   });
+
+  if (!tests.length) {
+    const tr = document.createElement("tr");
+    const empty = cell("当前统计窗口没有 GitLab 创建的云真机 job");
+    empty.colSpan = 7;
+    empty.className = "loading-cell";
+    tr.append(empty);
+    tbody.append(tr);
+  }
 
   const rate = allEffective ? Math.round((allSuccess / allEffective) * 100) : null;
   setStatus("ci-live", allEffective && allSuccess === allEffective ? "success" : allEffective ? "failed" : "none");

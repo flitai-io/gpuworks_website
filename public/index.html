@@ -224,14 +224,14 @@ cd gpuworks-*
       </div>
 
       <div class="ci-block">
-        <div class="ci-block-head"><div><h3>最近的云真机测试</h3><p>通过率 = success ÷ (success + failed)，窗口为下方最近 master pipelines；进行中、排队、取消、跳过和手动 job 不进入分母。</p></div></div>
+        <div class="ci-block-head"><div><h3>最近的云真机测试</h3><p>测试项从最近 master pipelines 的 <code>cloud-smoke</code> / <code>cloud-full</code> stage 自动发现；新增 case 自动出现，移除的 case 会随统计窗口退出。</p></div></div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>环境 / 用例</th><th>最近有效结果</th><th>最近成功</th><th>成功耗时</th><th>通过 / 有效运行</th><th>跳过 / 未执行</th><th>通过率</th></tr></thead>
             <tbody id="live-test-rows"><tr><td colspan="7" class="loading-cell">读取中…</td></tr></tbody>
           </table>
         </div>
-        <div class="coverage-note"><strong>覆盖边界：</strong>云真机 CI 覆盖 RunPod、AutoDL、Vast 与 CompShare。固定 gpu3、昇腾和 PPU 机器目前不是持续 CI runner；本站不会把仓库中的人工验收记录计入自动通过率。</div>
+        <div class="coverage-note"><strong>统计口径：</strong>通过率 = success ÷ (success + failed)。进行中、排队、取消、跳过和手动 job 不进入分母；“未执行”只统计 GitLab 明确创建并记录为 skipped/manual/canceled 的 job，不推测被 rules 完全排除的 case。固定 gpu3、昇腾和 PPU 机器目前不是持续 CI runner，人工验收不计入自动通过率。</div>
       </div>
 
       <div class="ci-block">
@@ -255,7 +255,8 @@ cd gpuworks-*
         <details><summary>支持哪些 GPU 和推理路径？</summary><p>NVIDIA 支持探测、容器推理和 x86 HAMi 显存切分；昇腾支持探测及 Docker + Ascend runtime 推理；PPU 已支持设备探测和库存呈现，但容器推理仍取决于可用的厂商 runtime，当前公开真机环境未验证该路径。</p></details>
         <details><summary>如何升级？数据会丢吗？</summary><p>server 通过替换二进制并重启升级，数据库会自动迁移；升级前仍应备份数据目录。agent 可在节点页触发升级，也可重跑 <code>/install.sh</code>，下载完成后原子替换。</p></details>
         <details><summary>代码是开源的吗？采用什么许可证？</summary><p>当前发布站提供可执行预览包，项目仓库为组织内部可见，仓库根目录尚未声明开源许可证。因此请勿自行推定开源授权；对外分发与商用条款以 ZStack 后续正式发布说明为准。</p></details>
-        <details><summary>CI 通过率是怎么计算的？</summary><p>页面从 GitLab API 定时读取最近 master pipeline 和 job。每个真机用例的通过率为 success ÷ (success + failed)；skipped、manual、canceled、running、pending 和 waiting_for_resource 不进入分母。页面同时展示有效样本数、跳过/未执行数、最近有效结果、最近成功时间与该次成功耗时，避免脱离样本量解读百分比。</p></details>
+        <details><summary>真机 case 增删或改名后，页面需要手工维护吗？</summary><p>不需要。页面按 GitLab job 的 stage 动态发现 <code>cloud-smoke</code> 与 <code>cloud-full</code> case。新增 job 会自动出现；删除的 job 在最近 20 条 pipeline 窗口内仍保留历史，随后自然退出；改名会暂时显示为两个独立 case，避免把不同测试口径错误合并。</p></details>
+        <details><summary>CI 通过率是怎么计算的？</summary><p>页面从 GitLab API 定时读取最近 master pipeline 和 job。每个真机用例的通过率为 success ÷ (success + failed)；skipped、manual、canceled、running、pending 和 waiting_for_resource 不进入分母。页面同时展示有效样本数、明确记录的跳过/未执行数、最近有效结果、最近成功时间与该次成功耗时，避免脱离样本量解读百分比。</p></details>
       </div>
     </section>
   </main>
