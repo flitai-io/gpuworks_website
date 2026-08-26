@@ -8,6 +8,7 @@ Type=oneshot
 User=zstack
 Group=zstack
 EnvironmentFile=/home/zstack/gpuworks-site/config/gitlab.env
+Environment=SITE_ROOT=/home/zstack/gpuworks-site/public
 ExecStart=/home/zstack/gpuworks-site/deploy/refresh-data.sh
 NoNewPrivileges=true
 PrivateTmp=true
