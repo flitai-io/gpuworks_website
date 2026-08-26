@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh GPUWorks release site data every five minutes
+
+[Timer]
+OnBootSec=45s
+OnUnitActiveSec=5min
+RandomizedDelaySec=20s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

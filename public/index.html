@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="GPUWorks 发布站：下载、安装指南、功能说明、常见问题与可核验的 CI/真机测试状态。">
+  <meta name="theme-color" content="#08111f">
+  <title>GPUWorks — 轻量 GPU 集群管理平台</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="GPUWorks 首页">
+      <span class="brand-mark" aria-hidden="true">G</span>
+      <span>GPUWorks</span>
+    </a>
+    <nav class="main-nav" aria-label="主导航">
+      <a href="#features">特性</a>
+      <a href="#download">下载</a>
+      <a href="#install">安装</a>
+      <a href="#ci">工程状态</a>
+      <a href="#faq">常见问题</a>
+    </nav>
+    <a class="header-action" href="#download">获取预览版</a>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="pulse"></span> Preview · 持续交付</div>
+          <h1>把分散的 GPU，<br><span>变成可用的推理集群。</span></h1>
+          <p class="hero-lead">GPUWorks 是轻量 GPU 集群管理平台。一个控制面、一条节点接入命令，完成 GPU 探测、模型部署、显存调度、监控日志和性能评测。</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#download">下载 Linux 安装包</a>
+            <a class="button secondary" href="#install">查看安装步骤</a>
+          </div>
+          <ul class="proof-list" aria-label="产品摘要">
+            <li><strong>2</strong><span>静态二进制<br>server + agent</span></li>
+            <li><strong>0</strong><span>agent 默认<br>入站端口</span></li>
+            <li><strong>3</strong><span>GPU 厂商<br>统一纳管</span></li>
+          </ul>
+        </div>
+        <div class="hero-visual">
+          <div class="visual-toolbar"><span></span><span></span><span></span><em>mirror1 · c4fdefa</em></div>
+          <a class="screenshot-link" href="/assets/dashboard.png" target="_blank" rel="noreferrer" title="打开 1440×900 原图">
+            <img src="/assets/dashboard.png" width="1440" height="900" alt="GPUWorks 概览页，展示节点、GPU、显存与集群健康状态" fetchpriority="high">
+          </a>
+          <div class="visual-note"><span class="status-dot"></span> c4fdefa 实际运行截图 · 点击看原图</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="trust-strip" aria-label="支持范围">
+      <span>NVIDIA</span><span>昇腾 Ascend</span><span>平头哥 PPU 探测</span><span>vLLM</span><span>SGLang</span><span>OpenAI API</span>
+    </section>
+
+    <section class="section" id="features">
+      <div class="section-heading">
+        <div><span class="kicker">从接入到服务</span><h2>一条完整、可解释的 GPU 工作流</h2></div>
+        <p>不是一组松散脚本。资源探测、模型与镜像、调度、运行时和观测围绕同一份期望状态协同工作。</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card featured">
+          <span class="feature-index">01</span>
+          <h3>异构节点统一接入</h3>
+          <p>agent 主动通过 WebSocket 外连控制面，适合内网、NAT 和租用容器。探测 NVIDIA、昇腾与 PPU 的设备、拓扑和运行指标。</p>
+          <div class="mini-flow"><span>Node</span><i>→</i><span>WSS / yamux</span><i>→</i><span>Server</span></div>
+        </article>
+        <article class="feature-card">
+          <span class="feature-index">02</span>
+          <h3>显存估算与拓扑调度</h3>
+          <p>提交前拆解权重、KV cache、CUDA graph 与预留显存，自动选卡并解释调度结果。</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-index">03</span>
+          <h3>vLLM / SGLang 部署</h3>
+          <p>引擎参数由服务端下发，支持多机推理、实例状态机、启动日志和 OpenAI 兼容入口。</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-index">04</span>
+          <h3>模型与离线镜像</h3>
+          <p>支持 Hugging Face、ModelScope、断点续传、节点间同步，以及带摘要校验的离线镜像包。</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-index">05</span>
+          <h3>切分、休眠与唤醒</h3>
+          <p>x86 NVIDIA 节点可用 HAMi 限制显存；空闲实例可 sleep，使用时再 wake，释放昂贵显存。</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-index">06</span>
+          <h3>监控、日志与评测</h3>
+          <p>内嵌时序指标和全文日志检索；纯 Go 评测引擎输出吞吐、TTFT、TPOT、P50/P99 与 Pareto 结果。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section showcase">
+      <div class="showcase-image">
+        <a class="screenshot-link" href="/assets/deploy.png" target="_blank" rel="noreferrer" title="打开 1440×900 原图">
+          <img src="/assets/deploy.png" width="1440" height="900" alt="GPUWorks 快速部署页面，展示模型、场景、蓝图和目标节点选择">
+        </a>
+      </div>
+      <div class="showcase-copy">
+        <span class="kicker">少填参数，多看依据</span>
+        <h2>从模型到服务，界面把关键决策说清楚</h2>
+        <p>快速部署按低延迟、均衡、高吞吐场景推荐配置；标准部署保留完整参数控制。最终选择、显存预算和引擎参数都可预览。</p>
+        <ul class="check-list">
+          <li>自动或手动选择节点与 GPU</li>
+          <li>部署前网络 preflight 与显存校验</li>
+          <li>运行后统一从 <code>/v1</code> 提供 OpenAI 兼容服务</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section product-gallery" aria-labelledby="gallery-title">
+      <div class="section-heading">
+        <div><span class="kicker">Latest product UI</span><h2 id="gallery-title">异构资源与镜像目录，一眼看清</h2></div>
+        <p>截图于 2026-08-26 直接取自 mirror1 上运行的 <code>c4fdefa</code>。页面数据来自实际接入节点，不是设计稿或拼接图。</p>
+      </div>
+      <div class="gallery-grid">
+        <figure>
+          <a class="screenshot-link" href="/assets/gpus.png" target="_blank" rel="noreferrer" title="打开 1440×900 原图">
+            <img src="/assets/gpus.png" width="1440" height="900" alt="GPUWorks GPU 设备页，展示 18 张物理 GPU 的健康与分配状态">
+          </a>
+          <figcaption><strong>GPU 设备</strong><span>物理卡 / vGPU、健康、分配与实时负载</span></figcaption>
+        </figure>
+        <figure>
+          <a class="screenshot-link" href="/assets/images.png" target="_blank" rel="noreferrer" title="打开 1440×900 原图">
+            <img src="/assets/images.png" width="1440" height="900" alt="GPUWorks 镜像目录页，展示跨厂商推理镜像系列、版本和节点覆盖">
+          </a>
+          <figcaption><strong>镜像目录</strong><span>系列、版本、框架、厂商与节点分发状态</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" id="download">
+      <div class="section-heading">
+        <div><span class="kicker">可校验的构建产物</span><h2>下载 GPUWorks</h2></div>
+        <p>当前为预览发布通道。每次 master 核心门禁通过后自动构建，mirror1 只同步成功 job 的产物。</p>
+      </div>
+      <div class="release-panel">
+        <div class="release-meta">
+          <span class="channel">PREVIEW</span>
+          <div><strong id="release-id">读取发布信息…</strong><span id="release-detail">正在核对构建元数据</span></div>
+        </div>
+        <div class="download-grid">
+          <article class="download-card" data-arch="amd64">
+            <div><span class="arch-icon">64</span><h3>Linux amd64</h3><p>Intel / AMD 服务器</p></div>
+            <dl><div><dt>大小</dt><dd data-field="size">—</dd></div><div><dt>SHA-256</dt><dd><code data-field="sha">—</code></dd></div></dl>
+            <a class="button primary download-link" href="#" aria-disabled="true">下载安装包</a>
+          </article>
+          <article class="download-card" data-arch="arm64">
+            <div><span class="arch-icon">A64</span><h3>Linux arm64</h3><p>Arm / 昇腾服务器</p></div>
+            <dl><div><dt>大小</dt><dd data-field="size">—</dd></div><div><dt>SHA-256</dt><dd><code data-field="sha">—</code></dd></div></dl>
+            <a class="button primary download-link" href="#" aria-disabled="true">下载安装包</a>
+          </article>
+        </div>
+        <div class="checksum-row"><a id="checksum-link" href="/downloads/SHA256SUMS">下载 SHA256SUMS</a><span>server 包已内嵌 Linux amd64 / arm64 agent，无需另找节点安装包。</span></div>
+      </div>
+      <aside class="truth-note"><strong>发布口径</strong><p>仓库目前没有语义化 tag 或 GitLab Release，本站不会把 commit 构建伪装成“稳定版”。生产采用前请按你的 GPU、驱动、镜像和网络环境完成验收。</p></aside>
+    </section>
+
+    <section class="section" id="install">
+      <div class="section-heading">
+        <div><span class="kicker">三步开始</span><h2>安装指南</h2></div>
+        <p>控制面与 agent 都是 <code>CGO_ENABLED=0</code> 的静态二进制。控制面不要求 Python、venv 或系统 glibc。</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-number">1</div>
+          <div class="step-body">
+            <h3>下载并启动控制面</h3>
+            <p>在一台 Linux 主机上选择对应架构，校验、解压并启动：</p>
+            <pre><code id="server-install-command">curl -fLO https://gpuworks.zstack.ai/downloads/&lt;安装包&gt;
+curl -fLO https://gpuworks.zstack.ai/downloads/SHA256SUMS
+sha256sum -c SHA256SUMS --ignore-missing
+tar -xzf gpuworks-*.tar.gz
+cd gpuworks-*
+./gpuworks serve --addr :8800 --data ./data \
+  --public-url https://gpu.example.com</code><button class="copy-button" data-copy="server-install-command">复制</button></pre>
+            <p class="step-note">首次启动会打印 admin 密码和默认 API key，各只显示一次。请立即保存并通过反向代理启用 HTTPS。</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-number">2</div>
+          <div class="step-body">
+            <h3>在控制台创建节点</h3>
+            <p>打开控制面，进入「计算节点 → 添加节点」。系统会创建节点专属 token，并给出完整安装命令。token 不写在公共安装脚本里。</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-number">3</div>
+          <div class="step-body">
+            <h3>在 GPU 节点执行接入命令</h3>
+            <pre><code id="agent-install-command">curl -fsSL https://gpu.example.com/install.sh | sh -s -- \
+  --server https://gpu.example.com --token &lt;节点专属 token&gt;</code><button class="copy-button" data-copy="agent-install-command">复制</button></pre>
+            <p class="step-note">有 Docker 时自动使用 Docker driver；无 root/daemon 的共享容器可回退到 udocker。agent 默认主动外连，不监听入站端口。</p>
+          </div>
+        </li>
+      </ol>
+      <div class="requirements">
+        <h3>安装前确认</h3>
+        <div><strong>控制面</strong><span>Linux amd64 / arm64；可被节点访问的 HTTP(S) 地址；持久化数据目录。</span></div>
+        <div><strong>NVIDIA 节点</strong><span><code>nvidia-smi</code> 可用；容器推理建议安装 Docker + NVIDIA Container Toolkit。</span></div>
+        <div><strong>昇腾节点</strong><span><code>npu-smi</code>、Docker 与 Ascend runtime 可用；使用匹配 CANN 的推理镜像。</span></div>
+        <div><strong>多机推理</strong><span>每台节点配置其他 rank 可达的 direct address，并允许临时 preflight/master 端口通信。</span></div>
+      </div>
+    </section>
+
+    <section class="section ci-section" id="ci">
+      <div class="section-heading">
+        <div><span class="kicker">数据来自 GitLab API</span><h2>工程状态，不只是一个徽章</h2></div>
+        <p id="ci-updated">正在读取最近 pipeline、核心门禁和云真机测试记录…</p>
+      </div>
+      <div class="ci-summary" aria-live="polite">
+        <article><span>最新 pipeline</span><strong id="ci-overall">读取中</strong><small id="ci-overall-detail">—</small></article>
+        <article><span>核心门禁</span><strong id="ci-core">读取中</strong><small id="ci-core-detail">UI / test / vet / L2 / L3</small></article>
+        <article><span>云真机测试</span><strong id="ci-live">读取中</strong><small id="ci-live-detail">按已结束运行统计</small></article>
+        <article><span>自动发布</span><strong id="ci-release">读取中</strong><small id="ci-release-detail">仅成功 master 构建</small></article>
+      </div>
+
+      <div class="ci-block">
+        <div class="ci-block-head"><div><h3>最近的云真机测试</h3><p>通过率 = success ÷ (success + failed)，窗口为下方最近 master pipelines；进行中、排队、取消、跳过和手动 job 不进入分母。</p></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>环境 / 用例</th><th>最近有效结果</th><th>最近成功</th><th>成功耗时</th><th>通过 / 有效运行</th><th>跳过 / 未执行</th><th>通过率</th></tr></thead>
+            <tbody id="live-test-rows"><tr><td colspan="7" class="loading-cell">读取中…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="coverage-note"><strong>覆盖边界：</strong>云真机 CI 覆盖 RunPod、AutoDL、Vast 与 CompShare。固定 gpu3、昇腾和 PPU 机器目前不是持续 CI runner；本站不会把仓库中的人工验收记录计入自动通过率。</div>
+      </div>
+
+      <div class="ci-block">
+        <div class="ci-block-head"><div><h3>master pipeline 历史</h3><p>每条记录分别汇总核心与云端 job。点击编号可进入 GitLab 查看原始 job 日志（GitLab 为内部可见）。</p></div><span id="pipeline-window">最近 20 条</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Pipeline</th><th>提交</th><th>开始时间</th><th>总耗时</th><th>核心</th><th>云真机</th><th>整体</th></tr></thead>
+            <tbody id="pipeline-rows"><tr><td colspan="7" class="loading-cell">读取中…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="ci-error" class="data-error" hidden>暂时无法读取 CI 数据；已发布安装包不受影响。请稍后刷新。</div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="section-heading"><div><span class="kicker">边界也说清楚</span><h2>常见问题</h2></div></div>
+      <div class="faq-list">
+        <details open><summary>这是稳定版吗？可以直接上生产吗？</summary><p>目前是按 master commit 构建的预览版，并非语义化稳定发行。CI 能证明仓库定义的自动检查结果，但不能替代你的驱动、GPU 型号、推理镜像、模型和网络条件验收。</p></details>
+        <details><summary>为什么只下载 server，没有单独的 agent 包？</summary><p>server 二进制内嵌 Linux amd64 和 arm64 agent，并通过自己的 <code>/dl/</code> 路径分发。节点页生成的安装命令会自动识别架构、下载并启动 agent。</p></details>
+        <details><summary>agent 是否需要开放端口？</summary><p>默认 agent_dial 模式不需要：agent 主动外连 server。多机推理需要节点间双向可达；可选 server_dial 模式也需要 server 能访问 agent 的监听端口。</p></details>
+        <details><summary>支持哪些 GPU 和推理路径？</summary><p>NVIDIA 支持探测、容器推理和 x86 HAMi 显存切分；昇腾支持探测及 Docker + Ascend runtime 推理；PPU 已支持设备探测和库存呈现，但容器推理仍取决于可用的厂商 runtime，当前公开真机环境未验证该路径。</p></details>
+        <details><summary>如何升级？数据会丢吗？</summary><p>server 通过替换二进制并重启升级，数据库会自动迁移；升级前仍应备份数据目录。agent 可在节点页触发升级，也可重跑 <code>/install.sh</code>，下载完成后原子替换。</p></details>
+        <details><summary>代码是开源的吗？采用什么许可证？</summary><p>当前发布站提供可执行预览包，项目仓库为组织内部可见，仓库根目录尚未声明开源许可证。因此请勿自行推定开源授权；对外分发与商用条款以 ZStack 后续正式发布说明为准。</p></details>
+        <details><summary>CI 通过率是怎么计算的？</summary><p>页面从 GitLab API 定时读取最近 master pipeline 和 job。每个真机用例的通过率为 success ÷ (success + failed)；skipped、manual、canceled、running、pending 和 waiting_for_resource 不进入分母。页面同时展示有效样本数、跳过/未执行数、最近有效结果、最近成功时间与该次成功耗时，避免脱离样本量解读百分比。</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div><span class="brand-mark" aria-hidden="true">G</span><strong>GPUWorks</strong></div>
+    <p>清晰地管理 GPU，诚实地呈现工程状态。</p>
+    <nav aria-label="页脚导航"><a href="#download">下载</a><a href="#install">安装</a><a href="#ci">CI 状态</a><a href="#faq">FAQ</a></nav>
+  </footer>
+</body>
+</html>

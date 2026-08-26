@@ -1,0 +1,16 @@
+[Unit]
+Description=Refresh GPUWorks release and GitLab CI data
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=zstack
+Group=zstack
+EnvironmentFile=/home/zstack/gpuworks-site/config/gitlab.env
+ExecStart=/home/zstack/gpuworks-site/deploy/refresh-data.sh
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/zstack/gpuworks-site/public
