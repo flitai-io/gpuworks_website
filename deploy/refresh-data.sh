@@ -95,45 +95,112 @@ jq empty "$work_dir/ci.json"
 install -m 0644 "$work_dir/ci.json" "$data_dir/ci.json.new"
 mv "$data_dir/ci.json.new" "$data_dir/ci.json"
 
-release_job=$(jq -r '
-  [.[] | .jobs[] | select(.name == "release-build" and .status == "success")][0].id // empty
+release_pair=$(jq -r '
+  [
+    .[] as $pipeline
+    | ([$pipeline.jobs[] | select(.name == "release-build" and .status == "success")][0] // null) as $linux
+    | ([$pipeline.jobs[] | select(.name == "release-build-macos" and .status == "success")][0] // null) as $macos
+    | select($linux != null and $macos != null)
+    | [$pipeline.id, $pipeline.sha, $linux.id, $macos.id]
+    | @tsv
+  ][0] // empty
 ' "$work_dir/pipelines.json")
 
-if [ -n "$release_job" ]; then
-  current_job=""
+if [ -n "$release_pair" ]; then
+  release_pipeline=$(printf '%s\n' "$release_pair" | cut -f1)
+  release_commit=$(printf '%s\n' "$release_pair" | cut -f2)
+  linux_job=$(printf '%s\n' "$release_pair" | cut -f3)
+  macos_job=$(printf '%s\n' "$release_pair" | cut -f4)
+  current_pair=""
   if [ -f "$data_dir/release.json" ]; then
-    current_job=$(jq -r '.job_id // empty' "$data_dir/release.json" 2>/dev/null || true)
+    current_pair=$(jq -r '
+      if .job_ids.linux and .job_ids.macos
+      then "\(.job_ids.linux):\(.job_ids.macos)"
+      else empty
+      end
+    ' "$data_dir/release.json" 2>/dev/null || true)
   fi
-  if [ "$release_job" != "$current_job" ]; then
-    api_get "$api_base/jobs/$release_job" > "$work_dir/release-job.json"
-    curl --config "$curl_config" \
-      "$api_base/jobs/$release_job/artifacts" > "$work_dir/artifacts.zip"
-    mkdir -p "$work_dir/artifacts"
-    unzip -q "$work_dir/artifacts.zip" -d "$work_dir/artifacts"
-    release_source="$work_dir/artifacts/dist/release.json"
-    test -f "$release_source"
-    test -f "$work_dir/artifacts/dist/SHA256SUMS"
-    jq empty "$release_source"
 
-    jq -r '.files[].name' "$release_source" | while IFS= read -r filename; do
+  if [ "$linux_job:$macos_job" != "$current_pair" ]; then
+    for release_os in linux macos; do
+      case "$release_os" in
+        linux) release_job=$linux_job ;;
+        macos) release_job=$macos_job ;;
+      esac
+      api_get "$api_base/jobs/$release_job" > "$work_dir/release-job-$release_os.json"
+      curl --config "$curl_config" \
+        "$api_base/jobs/$release_job/artifacts" > "$work_dir/artifacts-$release_os.zip"
+      mkdir -p "$work_dir/artifacts-$release_os"
+      unzip -q "$work_dir/artifacts-$release_os.zip" -d "$work_dir/artifacts-$release_os"
+      test -f "$work_dir/artifacts-$release_os/dist/release.json"
+      test -f "$work_dir/artifacts-$release_os/dist/SHA256SUMS"
+      jq empty "$work_dir/artifacts-$release_os/dist/release.json"
+    done
+
+    linux_release="$work_dir/artifacts-linux/dist/release.json"
+    macos_release="$work_dir/artifacts-macos/dist/release.json"
+    jq -e '.files | length == 2 and all(.os == "linux")' "$linux_release" >/dev/null
+    jq -e '.files | length == 2 and all(.os == "darwin")' "$macos_release" >/dev/null
+    linux_release_id=$(jq -r '.release_id' "$linux_release")
+    macos_release_id=$(jq -r '.release_id' "$macos_release")
+    linux_commit=$(jq -r '.commit' "$linux_release")
+    macos_commit=$(jq -r '.commit' "$macos_release")
+    if [ "$linux_release_id" != "$macos_release_id" ] || \
+       [ "$linux_commit" != "$macos_commit" ] || \
+       [ "$linux_commit" != "$release_commit" ]; then
+      echo "release artifact identity mismatch for pipeline $release_pipeline" >&2
+      exit 2
+    fi
+
+    mkdir -p "$work_dir/combined"
+    cat \
+      "$work_dir/artifacts-linux/dist/SHA256SUMS" \
+      "$work_dir/artifacts-macos/dist/SHA256SUMS" > "$work_dir/combined/SHA256SUMS"
+    jq -s '.[0] + {files: (.[0].files + .[1].files)}' \
+      "$linux_release" "$macos_release" > "$work_dir/combined/release.json"
+
+    jq -r '.files[].name' "$work_dir/combined/release.json" | while IFS= read -r filename; do
       case "$filename" in
         ""|*/*|*".."*) echo "unsafe artifact filename: $filename" >&2; exit 2 ;;
       esac
-      test -f "$work_dir/artifacts/dist/$filename"
-      install -m 0644 "$work_dir/artifacts/dist/$filename" "$downloads_dir/$filename"
+      source_file=""
+      for release_os in linux macos; do
+        candidate="$work_dir/artifacts-$release_os/dist/$filename"
+        if [ -f "$candidate" ]; then
+          source_file=$candidate
+          break
+        fi
+      done
+      test -n "$source_file"
+      cp "$source_file" "$work_dir/combined/$filename"
     done
-    install -m 0644 "$work_dir/artifacts/dist/SHA256SUMS" "$downloads_dir/SHA256SUMS"
+    (cd "$work_dir/combined" && sha256sum -c SHA256SUMS)
 
-    job_url=$(jq -r '.web_url' "$work_dir/release-job.json")
+    jq -r '.files[].name' "$work_dir/combined/release.json" | while IFS= read -r filename; do
+      install -m 0644 "$work_dir/combined/$filename" "$downloads_dir/$filename"
+    done
+    install -m 0644 "$work_dir/combined/SHA256SUMS" "$downloads_dir/SHA256SUMS"
+
+    linux_job_url=$(jq -r '.web_url' "$work_dir/release-job-linux.json")
+    macos_job_url=$(jq -r '.web_url' "$work_dir/release-job-macos.json")
     jq \
-      --argjson job_id "$release_job" \
-      --arg job_url "$job_url" \
+      --argjson pipeline_id "$release_pipeline" \
+      --argjson linux_job "$linux_job" \
+      --argjson macos_job "$macos_job" \
+      --arg linux_job_url "$linux_job_url" \
+      --arg macos_job_url "$macos_job_url" \
       --arg synced_at "$generated_at" \
-      '. + {job_id: $job_id, job_url: $job_url, synced_at: $synced_at}' \
-      "$release_source" > "$work_dir/release-published.json"
+      '. + {
+        pipeline_id: $pipeline_id,
+        job_id: $linux_job,
+        job_url: $linux_job_url,
+        job_ids: {linux: $linux_job, macos: $macos_job},
+        job_urls: {linux: $linux_job_url, macos: $macos_job_url},
+        synced_at: $synced_at
+      }' "$work_dir/combined/release.json" > "$work_dir/release-published.json"
     install -m 0644 "$work_dir/release-published.json" "$data_dir/release.json.new"
     mv "$data_dir/release.json.new" "$data_dir/release.json"
-    echo "published release-build job $release_job"
+    echo "published release pipeline $release_pipeline jobs $linux_job/$macos_job"
   fi
 fi
 

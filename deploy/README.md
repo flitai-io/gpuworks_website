@@ -3,7 +3,7 @@
 Static release website for `https://gpuworks.zstack.ai`.
 
 - `public/`: HTML, CSS, JavaScript, product screenshots, release files and generated JSON.
-- `deploy/refresh-data.sh`: reads the last 20 master pipelines and their jobs from GitLab, then mirrors the newest successful `release-build` artifacts.
+- `deploy/refresh-data.sh`: reads the last 20 master pipelines and their jobs from GitLab, then mirrors and merges the newest pipeline whose `release-build` and `release-build-macos` jobs both succeeded.
 - `deploy/Caddyfile`: dedicated Caddy site block.
 - `deploy/gpuworks-site-refresh.*`: five-minute systemd refresh timer.
 
