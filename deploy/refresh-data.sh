@@ -95,6 +95,65 @@ jq empty "$work_dir/ci.json"
 install -m 0644 "$work_dir/ci.json" "$data_dir/ci.json.new"
 mv "$data_dir/ci.json.new" "$data_dir/ci.json"
 
+docs_pair=$(jq -r '
+  [
+    .[] as $pipeline
+    | select($pipeline.status == "success" and $pipeline.ref == $ref)
+    | ($pipeline.jobs[] | select(.name == "docs-build" and .status == "success")) as $docs
+    | [$pipeline.id, $pipeline.sha, $docs.id]
+    | @tsv
+  ][0] // empty
+' --arg ref "$ref" "$work_dir/pipelines.json")
+
+if [ -n "$docs_pair" ]; then
+  docs_pipeline=$(printf '%s\n' "$docs_pair" | cut -f1)
+  docs_commit=$(printf '%s\n' "$docs_pair" | cut -f2)
+  docs_job=$(printf '%s\n' "$docs_pair" | cut -f3)
+  current_docs_commit=""
+  if [ -f "$SITE_ROOT/docs/docs-manifest.json" ]; then
+    current_docs_commit=$(jq -r '.commit // empty' "$SITE_ROOT/docs/docs-manifest.json" 2>/dev/null || true)
+  fi
+
+  if [ "$docs_commit" != "$current_docs_commit" ]; then
+    curl --config "$curl_config" \
+      "$api_base/jobs/$docs_job/artifacts" > "$work_dir/docs-artifacts.zip"
+    if unzip -Z1 "$work_dir/docs-artifacts.zip" | grep -Eq '(^/|(^|/)\.\.?(/|$))'; then
+      echo "unsafe path in docs artifact from job $docs_job" >&2
+      exit 2
+    fi
+    mkdir -p "$work_dir/docs-artifacts"
+    unzip -q "$work_dir/docs-artifacts.zip" -d "$work_dir/docs-artifacts"
+    docs_public="$work_dir/docs-artifacts/docs-site/public"
+    test -s "$docs_public/index.html"
+    test -s "$docs_public/tutorials/getting-started/index.html"
+    test -s "$docs_public/docs-manifest.json"
+    test -n "$(find "$docs_public" -maxdepth 1 -name 'offline-search-index.*.json' -print -quit)"
+    jq -e --arg commit "$docs_commit" \
+      '.project == "gpuworks" and .commit == $commit and .generator == "hugo-oink"' \
+      "$docs_public/docs-manifest.json" >/dev/null
+
+    docs_stage="$work_dir/docs.next"
+    mkdir -p "$docs_stage"
+    cp -a "$docs_public"/. "$docs_stage"/
+    docs_current="$SITE_ROOT/docs"
+    docs_previous="$SITE_ROOT/docs.previous"
+    docs_old="$work_dir/docs.previous"
+    if [ -e "$docs_current" ]; then
+      mv "$docs_current" "$docs_old"
+    fi
+    if ! mv "$docs_stage" "$docs_current"; then
+      if [ -e "$docs_old" ]; then mv "$docs_old" "$docs_current"; fi
+      echo "failed to activate docs artifact from job $docs_job" >&2
+      exit 1
+    fi
+    rm -rf "$docs_previous"
+    if [ -e "$docs_old" ]; then mv "$docs_old" "$docs_previous"; fi
+    echo "published docs pipeline $docs_pipeline job $docs_job commit $docs_commit"
+  fi
+else
+  echo "no successful docs-build found for $ref; keeping current docs" >&2
+fi
+
 release_pair=$(jq -r '
   [
     .[] as $pipeline

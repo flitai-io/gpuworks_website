@@ -1,0 +1,11 @@
+# Runtime credentials and deployment-only state
+/config/*
+!/config/gitlab.env.example
+/backups/
+
+# Generated site data and release artifacts
+/public/data/
+/public/downloads/
+/public/docs/
+/public/docs.previous/
+/public/assets/*.webp

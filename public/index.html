@@ -18,6 +18,7 @@
       <span>GPUWorks</span>
     </a>
     <nav class="main-nav" aria-label="主导航">
+      <a href="/docs/">文档</a>
       <a href="#features">特性</a>
       <a href="#download">下载</a>
       <a href="#install">安装</a>
@@ -183,16 +184,15 @@
         <li>
           <div class="step-number">1</div>
           <div class="step-body">
-            <h3>下载并启动控制面</h3>
-            <p>在一台 Linux 主机上选择对应架构，校验、解压并启动：</p>
+            <h3>下载并安装控制面</h3>
+            <p>在一台 Linux 主机上选择对应架构，校验、解压并安装为服务：</p>
             <pre><code id="server-install-command">curl -fLO https://gpuworks.zstack.ai/downloads/&lt;安装包&gt;
 curl -fLO https://gpuworks.zstack.ai/downloads/SHA256SUMS
 sha256sum -c SHA256SUMS --ignore-missing
 tar -xzf gpuworks-*.tar.gz
 cd gpuworks-*
-./gpuworks serve --addr :8800 --data ./data \
-  --public-url https://gpu.example.com</code><button class="copy-button" data-copy="server-install-command">复制</button></pre>
-            <p class="step-note">首次启动会打印 admin 密码和默认 API key，各只显示一次。请立即保存并通过反向代理启用 HTTPS。</p>
+./gpuworks install</code><button class="copy-button" data-copy="server-install-command">复制</button></pre>
+            <p class="step-note">install 默认装到 <code>/opt/gpuworks/server</code>：写出 systemd 单元（无 root 时退回后台进程）、启动并等到健康检查通过，然后打印访问地址和管理员密码；<code>--addr</code>、<code>--dir</code>、<code>--public-url</code> 等都可显式指定。默认不写固定地址（按请求 Host 三级解析），只有控制面必须对外声明域名时才传 <code>--public-url</code>。密码同时记录在数据目录的 <code>initial-credentials</code>（0664），登录后请改密并删除该文件。生产环境请通过反向代理启用 HTTPS。升级用 <code>gpuworks upgrade</code>：备份数据库与密钥后原地替换，探活失败自动回滚（仅重启服务一步需要 sudo）。</p>
           </div>
         </li>
         <li>
@@ -263,7 +263,7 @@ cd gpuworks-*
         <details><summary>为什么只下载 server，没有单独的 agent 包？</summary><p>server 二进制内嵌 Linux amd64 和 arm64 agent，并通过自己的 <code>/dl/</code> 路径分发。节点页生成的安装命令会自动识别架构、下载并启动 agent。</p></details>
         <details><summary>agent 是否需要开放端口？</summary><p>默认 agent_dial 模式不需要：agent 主动外连 server。多机推理需要节点间双向可达；可选 server_dial 模式也需要 server 能访问 agent 的监听端口。</p></details>
         <details><summary>支持哪些 GPU 和推理路径？</summary><p>NVIDIA 支持探测、容器推理和 x86 HAMi 显存切分；昇腾支持探测及 Docker + Ascend runtime 推理；PPU 已支持设备探测和库存呈现，但容器推理仍取决于可用的厂商 runtime，当前公开真机环境未验证该路径。</p></details>
-        <details><summary>如何升级？数据会丢吗？</summary><p>server 通过替换二进制并重启升级，数据库会自动迁移；升级前仍应备份数据目录。agent 可在节点页触发升级，也可重跑 <code>/install.sh</code>，下载完成后原子替换。</p></details>
+        <details><summary>如何升级？数据会丢吗？</summary><p>server 执行 <code>gpuworks upgrade</code>：从本站取最新发布包并校验 sha256，停止服务、自动备份数据库和 master key，再原子替换二进制并重启；新版本探活失败会自动回滚到备份并重启旧版本。备份保留最近 3 组，数据库迁移随启动完成。agent 可在节点页触发升级，也可重跑 <code>/install.sh</code>，下载完成后原子替换。</p></details>
         <details><summary>代码是开源的吗？采用什么许可证？</summary><p>当前发布站提供可执行预览包，项目仓库为组织内部可见，仓库根目录尚未声明开源许可证。因此请勿自行推定开源授权；对外分发与商用条款以 ZStack 后续正式发布说明为准。</p></details>
         <details><summary>真机 case 增删或改名后，页面需要手工维护吗？</summary><p>不需要。页面按 GitLab job 的 stage 动态发现 <code>cloud-smoke</code> 与 <code>cloud-full</code> case。新增 job 会自动出现；删除的 job 在最近 20 条 pipeline 窗口内仍保留历史，随后自然退出；改名会暂时显示为两个独立 case，避免把不同测试口径错误合并。</p></details>
         <details><summary>CI 通过率是怎么计算的？</summary><p>页面从 GitLab API 定时读取最近 master pipeline 和 job。每个真机用例的通过率为 success ÷ (success + failed)；skipped、manual、canceled、running、pending 和 waiting_for_resource 不进入分母。页面同时展示有效样本数、明确记录的跳过/未执行数、最近有效结果、最近成功时间与该次成功耗时，避免脱离样本量解读百分比。</p></details>

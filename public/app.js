@@ -166,8 +166,7 @@ async function loadRelease() {
       "sha256sum -c SHA256SUMS --ignore-missing",
       "tar -xzf " + amd64.name,
       "cd " + packageDir,
-      "./gpuworks serve --addr :8800 --data ./data \\",
-      "  --public-url https://gpu.example.com",
+      "./gpuworks install",
     ].join("\n"));
   }
   return release;

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="GPUWorks 文档站视觉与信息架构 mock">
+  <meta name="theme-color" content="#08111f">
+  <title>GPUWorks Docs — Mock</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/docs-mock/docs-mock.css">
+  <script src="/docs-mock/docs-mock.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">跳到内容</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="返回 GPUWorks 产品站">
+        <span class="brand-mark" aria-hidden="true">G</span>
+        <span>GPUWorks</span>
+        <span class="brand-divider"></span>
+        <span class="brand-section">文档</span>
+      </a>
+      <nav class="topnav" aria-label="站点导航">
+        <a href="/">产品</a>
+        <a class="active" href="/docs-mock/">文档</a>
+        <a href="/#download">下载</a>
+        <a href="https://dev.zstack.io/wei.wang/gpuworks" target="_blank" rel="noreferrer">GitLab ↗</a>
+      </nav>
+      <button class="menu-button" type="button" aria-expanded="false" aria-controls="mobile-nav">菜单</button>
+    </div>
+    <nav id="mobile-nav" class="mobile-nav" aria-label="移动端导航">
+      <a href="/">产品</a><a class="active" href="/docs-mock/">文档</a><a href="/#download">下载</a>
+    </nav>
+  </header>
+
+  <main id="content">
+    <section class="docs-hero">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="pulse"></span> 文档 · 随代码持续更新</div>
+          <h1>从第一台 GPU，<br><span>到可用的推理服务。</span></h1>
+          <p>安装控制面、接入节点、部署模型、解释调度结果。这里的每一页都来自 GPUWorks 仓库的 <code>docs/</code>，与当前代码版本一起发布。</p>
+          <label class="search-box" for="doc-search">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="doc-search" type="search" placeholder="搜索文档、命令或配置项" autocomplete="off">
+            <kbd>⌘ K</kbd>
+          </label>
+          <div id="search-hint" class="search-hint" aria-live="polite">试试搜索 “模型部署” 或 “nvidia-smi”</div>
+        </div>
+        <div class="hero-status">
+          <div class="status-head"><span class="live-dot"></span><span>当前文档版本</span><span class="status-label">master</span></div>
+          <div class="commit">0c24f344</div>
+          <div class="status-copy">最近构建 · 2026-09-28 12:08<br>内容源 · <code>docs/</code></div>
+          <div class="status-line"><span>构建</span><strong>通过</strong><span class="check">✓</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="page-grid">
+      <aside class="sidebar" aria-label="文档目录">
+        <div class="sidebar-label">目录</div>
+        <div class="side-group">
+          <div class="side-title">开始使用</div>
+          <a class="side-link current" href="#start">从零启动并部署第一个模型<span>01</span></a>
+          <a class="side-link" href="#connect">接入第一台 GPU 节点<span>02</span></a>
+          <a class="side-link" href="#two-models">一张 GPU 跑两个模型<span>03</span></a>
+        </div>
+        <div class="side-group">
+          <div class="side-title">操作指南</div>
+          <a class="side-link" href="#deploy">部署模型与解释调度<span>↗</span></a>
+          <a class="side-link" href="#sync">下载、缓存和同步模型<span>↗</span></a>
+          <a class="side-link" href="#monitor">监控与日志<span>↗</span></a>
+          <a class="side-link" href="#cloud">租用云 GPU<span>↗</span></a>
+        </div>
+        <div class="side-group">
+          <div class="side-title">参考</div>
+          <a class="side-link" href="#api">REST API<span>↗</span></a>
+          <a class="side-link" href="#config">配置与环境变量<span>↗</span></a>
+          <a class="side-link" href="#matrix">支持矩阵<span>↗</span></a>
+        </div>
+        <div class="side-group">
+          <div class="side-title">开发者</div>
+          <a class="side-link" href="#dev">本地开发与测试<span>↗</span></a>
+          <a class="side-link" href="#adr">架构决策记录<span>↗</span></a>
+        </div>
+        <div class="sidebar-foot"><span class="tiny-pulse"></span> 文档与代码同源发布</div>
+      </aside>
+
+      <div class="doc-content">
+        <div class="breadcrumb"><span>GPUWorks</span><i>/</i><strong>文档首页</strong></div>
+        <div class="content-heading">
+          <div><span class="kicker">开始使用</span><h2>先完成一条能跑通的路径</h2></div>
+          <a class="edit-link" href="https://dev.zstack.io/wei.wang/gpuworks/-/tree/master/docs" target="_blank" rel="noreferrer">在 GitLab 查看源码 ↗</a>
+        </div>
+
+        <section class="task-grid" aria-label="常用入口">
+          <a class="task-card task-primary" href="#start">
+            <span class="task-index">01 · 10 分钟</span><span class="task-arrow">→</span>
+            <h3>从零启动</h3><p>安装 server，接入一台节点，部署第一个模型。</p><span class="task-cta">阅读教程</span>
+          </a>
+          <a class="task-card" href="#connect">
+            <span class="task-index">02 · 节点管理</span><span class="task-arrow">→</span>
+            <h3>接入 GPU 节点</h3><p>了解 token、主动外连、探测和 agent 升级。</p><span class="task-cta">开始接入</span>
+          </a>
+          <a class="task-card" href="#deploy">
+            <span class="task-index">03 · 推理服务</span><span class="task-arrow">→</span>
+            <h3>部署模型</h3><p>选择镜像、显存预算、GPU 与 OpenAI API 入口。</p><span class="task-cta">查看指南</span>
+          </a>
+          <a class="task-card" href="#api">
+            <span class="task-index">04 · 接口</span><span class="task-arrow">→</span>
+            <h3>调用 API</h3><p>用兼容 OpenAI 的请求验证第一个运行实例。</p><span class="task-cta">复制示例</span>
+          </a>
+        </section>
+
+        <div class="lower-grid">
+          <section class="updates-panel" aria-labelledby="updates-title">
+            <div class="panel-heading"><div><span class="kicker">最近更新</span><h2 id="updates-title">跟着项目一起变化</h2></div><a href="#all-updates">查看全部</a></div>
+            <article class="update-row"><div class="update-dot blue"></div><div><a href="#deploy">部署模型与解释调度结果</a><p>补充自动放置、来源选择和配置评估的实际判断依据。</p></div><time>今天</time></article>
+            <article class="update-row"><div class="update-dot cyan"></div><div><a href="#network">网络角色与节点间同步</a><p>说明管理网、服务网络和参数同步的选择顺序。</p></div><time>2 天前</time></article>
+            <article class="update-row"><div class="update-dot green"></div><div><a href="#gateway">多副本网关路由</a><p>新增 least_request、prefix_affinity 与 failover 的行为说明。</p></div><time>5 天前</time></article>
+            <article class="update-row"><div class="update-dot gray"></div><div><a href="#adr">数据通道不回退控制通道</a><p>记录 data lane 断开时的等待、超时和 503 语义。</p></div><time>上周</time></article>
+          </section>
+
+          <aside class="article-preview" id="start" aria-labelledby="preview-title">
+            <div class="preview-top"><span class="preview-tag">TUTORIAL</span><span>约 10 分钟</span></div>
+            <h2 id="preview-title">从零启动并部署第一个模型</h2>
+            <p>完成后你会得到一个运行中的 GPUWorks 控制面、一个已接入节点，以及一个可通过 OpenAI 兼容接口访问的模型。</p>
+            <div class="preview-step"><span>1</span><div><strong>安装控制面</strong><small>下载、校验并运行 <code>gpuworks install</code></small></div></div>
+            <div class="preview-step"><span>2</span><div><strong>创建节点</strong><small>控制台生成节点专属 token 和接入命令</small></div></div>
+            <div class="preview-step"><span>3</span><div><strong>发送第一条请求</strong><small>从实例详情复制 API 地址与示例请求</small></div></div>
+            <a class="preview-button" href="#connect">打开完整教程 <span>→</span></a>
+          </aside>
+        </div>
+
+        <section class="role-section" aria-labelledby="role-title">
+          <div class="panel-heading"><div><span class="kicker">按角色找文档</span><h2 id="role-title">你现在要解决什么问题？</h2></div></div>
+          <div class="role-grid">
+            <a href="#operator" class="role-card"><span class="role-icon">⌁</span><div><strong>我是平台管理员</strong><p>安装、节点、权限、网络和生产部署</p></div><span>→</span></a>
+            <a href="#ml" class="role-card"><span class="role-icon">▣</span><div><strong>我要部署模型</strong><p>模型来源、显存估算、镜像和多机推理</p></div><span>→</span></a>
+            <a href="#developer" class="role-card"><span class="role-icon">&lt;/&gt;</span><div><strong>我要参与开发</strong><p>本地搭建、测试分层、协议和代码地图</p></div><span>→</span></a>
+          </div>
+        </section>
+
+        <section class="callout" aria-label="文档反馈">
+          <div class="callout-icon">✦</div><div><strong>找不到你要的答案？</strong><p>告诉我们你卡在哪一步，问题会进入文档改进队列。</p></div><a href="https://dev.zstack.io/wei.wang/gpuworks/-/issues/new" target="_blank" rel="noreferrer">提交问题 ↗</a>
+        </section>
+      </div>
+
+      <aside class="right-rail" aria-label="本页信息">
+        <div class="rail-title">本页内容</div>
+        <a class="rail-link current" href="#start">开始使用</a>
+        <a class="rail-link" href="#updates-title">最近更新</a>
+        <a class="rail-link" href="#role-title">按角色找文档</a>
+        <div class="rail-rule"></div>
+        <div class="rail-title">页面信息</div>
+        <div class="rail-meta"><span>最后更新</span><strong>2026-09-28</strong></div>
+        <div class="rail-meta"><span>来源</span><code>docs/</code></div>
+        <a class="rail-feedback" href="https://dev.zstack.io/wei.wang/gpuworks/-/issues/new" target="_blank" rel="noreferrer">发现问题？</a>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="footer"><div><strong>GPUWorks</strong><span>轻量 GPU 集群管理平台</span></div><div><span>Docs mock · 视觉提案</span><a href="/">返回产品站 →</a></div></footer>
+</body>
+</html>
