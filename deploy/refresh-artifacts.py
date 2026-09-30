@@ -672,6 +672,7 @@ def build_and_publish(tree_dir, excluded, blobs, dirs, commit):
     hugo_version = version_out.split()[1] if len(version_out.split()) > 1 else version_out
     write_manifest(site, commit, hugo_version, synced_at)
 
+    hugo_env = dict(os.environ, HUGO_CACHEDIR=str(WORK_ROOT / "hugo-cache"))
     subprocess.run(
         [
             hugo,
@@ -687,6 +688,7 @@ def build_and_publish(tree_dir, excluded, blobs, dirs, commit):
             "info",
         ],
         check=True,
+        env=hugo_env,
     )
 
     generate_wrappers(site / "public", stager)
