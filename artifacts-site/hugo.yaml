@@ -1,0 +1,28 @@
+# Static artifacts browser for gpuworks.zstack.ai/artifacts/.
+# Assembled and built by deploy/refresh-artifacts.py: this file is copied into
+# the build directory, where the synced artifacts tree is staged as content/
+# and static/. Layouts live next to this file and are copied verbatim.
+baseURL: /artifacts/
+defaultContentLanguage: zh
+hasCJKLanguage: true
+timeZone: Asia/Shanghai
+disableKinds: [taxonomy, term, RSS, robotsTXT, sitemap]
+disablePathToLower: false
+
+frontmatter:
+  date: [created, :default]
+  lastmod: [updated, :default]
+
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+    parser:
+      wrapStandAloneImageWithinParagraph: false
+  highlight:
+    noClasses: true
+    style: github
+
+params:
+  repo_url: http://dev.zstack.io:9080/wei.wang/gpuworks
+  repo_ref: master

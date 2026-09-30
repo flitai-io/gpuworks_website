@@ -1,0 +1,1 @@
+<div class="page-meta">{{ with .Params.status }}<span class="badge status-{{ . }}">{{ . }}</span>{{ end }}{{ with .Params.created }}<span class="meta-item">created <time>{{ time.Format "2006-01-02" . }}</time></span>{{ end }}{{ with .Params.updated }}<span class="meta-item">updated <time>{{ time.Format "2006-01-02" . }}</time></span>{{ end }}</div>

@@ -1,0 +1,12 @@
+{{ define "main" }}
+{{ partial "breadcrumb.html" . }}
+<article class="content">
+  <h1>{{ .Title }}</h1>
+  {{ with .Params.summary }}<p class="page-summary">{{ . }}</p>{{ end }}
+  {{ partial "page-meta.html" . }}
+  {{ with .Params.outcome }}<div class="callout"><strong>outcome</strong> · {{ . }}</div>{{ end }}
+  <div class="md">
+    {{ .Content }}
+  </div>
+</article>
+{{ end }}

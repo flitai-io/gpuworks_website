@@ -28,6 +28,19 @@ gpuworks.zstack.ai {
 	@docs_meta path /docs/docs-manifest.json /docs/offline-search-index.*.json
 	header @docs_meta Cache-Control "no-store"
 
+	# Artifacts browser: synced documents carry their own inline scripts and
+	# styles (self-contained reports/mockups) plus Google Fonts, so the CSP is
+	# relaxed the same way as /docs/*. Raw files under /artifacts/f/ are shown
+	# inside wrapper pages via a same-origin iframe, hence X-Frame-Options
+	# SAMEORIGIN instead of DENY.
+	@artifacts path /artifacts/*
+	header @artifacts {
+		Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; base-uri 'none'; frame-ancestors 'self'; form-action 'self'"
+		X-Frame-Options "SAMEORIGIN"
+		Cache-Control "no-cache"
+		defer
+	}
+
 	file_server
 
 	log {

@@ -1,0 +1,28 @@
+{{ define "main" }}
+{{ partial "breadcrumb.html" . }}
+<article class="content">
+  <h1>{{ .Title }}</h1>
+  {{ partial "page-meta.html" . }}
+  {{ with .Params.outcome }}<div class="callout"><strong>outcome</strong> · {{ . }}</div>{{ end }}
+  {{ with .Content }}<div class="md">{{ . }}</div>{{ end }}
+</article>
+{{ with .Pages }}
+<section class="listing">
+  <table>
+    <thead>
+      <tr><th>标题</th><th>status</th><th>updated</th><th>摘要</th></tr>
+    </thead>
+    <tbody>
+      {{ range sort . "Params.updated" "desc" }}
+      <tr>
+        <td class="listing-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></td>
+        <td class="listing-status">{{ partial "status-badge.html" . }}</td>
+        <td class="listing-date">{{ with .Params.updated }}{{ time.Format "2006-01-02" . }}{{ end }}</td>
+        <td class="listing-summary">{{ with .Params.summary }}{{ . }}{{ end }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</section>
+{{ end }}
+{{ end }}

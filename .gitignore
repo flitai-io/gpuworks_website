@@ -8,4 +8,11 @@
 /public/downloads/
 /public/docs/
 /public/docs.previous/
+/public/artifacts/
+/public/artifacts.previous/
+/public/artifacts.next/
 /public/assets/*.webp
+
+# Host-side state of the artifacts refresh (synced tree, hugo build dir, hugo binary)
+/artifacts-work/
+/bin/

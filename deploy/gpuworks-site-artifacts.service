@@ -1,0 +1,18 @@
+[Unit]
+Description=Refresh GPUWorks artifacts site (sync, build, publish)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=zstack
+Group=zstack
+EnvironmentFile=/home/zstack/gpuworks-site/config/gitlab.env
+Environment=SITE_ROOT=/home/zstack/gpuworks-site/public
+ExecStart=/usr/bin/python3 /home/zstack/gpuworks-site/deploy/refresh-artifacts.py
+TimeoutStartSec=30min
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=-/home/zstack/gpuworks-site/public -/home/zstack/gpuworks-site/artifacts-work -/home/zstack/gpuworks-site/bin

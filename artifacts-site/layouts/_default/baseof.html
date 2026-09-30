@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{{ if .IsHome }}GPUWorks Artifacts{{ else }}{{ .Title }} · GPUWorks Artifacts{{ end }}</title>
+  <link rel="stylesheet" href="{{ site.BaseURL }}_assets/site.css">
+  <script src="{{ site.BaseURL }}_assets/tree.js" defer></script>
+</head>
+<body class="shell-body">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <a class="brand" href="{{ site.BaseURL }}">GPU<b>Works</b> artifacts</a>
+      <button class="sidebar-close" id="sidebar-close" aria-label="关闭目录">✕</button>
+    </div>
+    <nav class="tree" id="tree" aria-label="文件目录">
+      <noscript><p class="tree-noscript">目录需要 JavaScript。</p></noscript>
+    </nav>
+  </aside>
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+  <div class="frame">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <button class="menu-btn" id="menu-btn" aria-label="打开目录">☰</button>
+        <nav class="topnav">
+          <a href="/">GPUWorks</a>
+          <a href="/docs/">文档</a>
+          <a href="{{ site.Params.repo_url }}" rel="noopener">GitLab</a>
+        </nav>
+      </div>
+    </header>
+    <main class="main">
+      <div class="container">
+        {{ block "main" . }}{{ end }}
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        {{ with hugo.Data.manifest }}
+        内容同步自 gpuworks 仓库 <code>{{ .ref }}</code>@<a href="{{ site.Params.repo_url }}/-/commit/{{ .commit }}">{{ .short_commit }}</a>，{{ .synced_at }} 由 artifacts-site 生成。
+        {{ else }}
+        内容同步自 gpuworks 仓库。
+        {{ end }}
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

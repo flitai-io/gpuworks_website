@@ -1,0 +1,5 @@
+{{ if not .IsHome }}
+<nav class="breadcrumb" aria-label="面包屑">
+  <a href="{{ site.BaseURL }}">artifacts</a>{{ range .Ancestors.Reverse }}<span class="crumb-sep">/</span><a href="{{ .RelPermalink }}">{{ .Title }}</a>{{ end }}{{ if .File }}{{ if ne .Kind "section" }}<span class="crumb-sep">/</span><span aria-current="page">{{ .Title }}</span>{{ end }}{{ end }}
+</nav>
+{{ end }}
