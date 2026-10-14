@@ -168,8 +168,47 @@ async function loadRelease() {
       "cd " + packageDir,
       "./gpuworks install",
     ].join("\n"));
+    // The public sources (ADR 0040) carry the same archives under
+    // releases/<release_id>/; OSS is the default in the command, the hint
+    // above it names the OBS and R2 alternates.
+    const distDir = "https://gpuworks-dl.oss-cn-shanghai.aliyuncs.com/releases/" + (release.release_id || shortSha(release.commit));
+    text("server-install-command-public", [
+      "curl -fLO " + distDir + "/" + amd64.name,
+      "curl -fLO " + distDir + "/SHA256SUMS",
+      "sha256sum -c SHA256SUMS --ignore-missing",
+      "tar -xzf " + amd64.name,
+      "cd " + packageDir,
+      "./gpuworks install",
+    ].join("\n"));
   }
   return release;
+}
+
+function selectInstallTab(tab) {
+  document.querySelectorAll(".install-tab").forEach(function (other) {
+    const selected = other === tab;
+    other.setAttribute("aria-selected", selected ? "true" : "false");
+    other.tabIndex = selected ? 0 : -1;
+    const panel = document.getElementById(other.getAttribute("aria-controls"));
+    if (panel) panel.hidden = !selected;
+  });
+}
+
+function setupInstallTabs() {
+  const tabs = Array.from(document.querySelectorAll(".install-tab"));
+  tabs.forEach(function (tab, index) {
+    tab.addEventListener("click", function () { selectInstallTab(tab); });
+    tab.addEventListener("keydown", function (event) {
+      let offset = 0;
+      if (event.key === "ArrowRight") offset = 1;
+      else if (event.key === "ArrowLeft") offset = -1;
+      else return;
+      event.preventDefault();
+      const next = tabs[(index + offset + tabs.length) % tabs.length];
+      next.focus();
+      selectInstallTab(next);
+    });
+  });
 }
 
 function renderLiveTests(pipelines) {
@@ -311,5 +350,6 @@ async function refresh() {
 }
 
 setupCopyButtons();
+setupInstallTabs();
 refresh();
 window.setInterval(refresh, 60000);

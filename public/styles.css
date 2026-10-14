@@ -291,6 +291,14 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .step-number { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; color: #fff; background: var(--ink); font-weight: 850; }
 .step-body h3 { margin: 3px 0 6px; font-size: 21px; }
 .step-body p { margin: 0 0 15px; color: var(--muted); }
+.install-tabs { margin: 0 0 15px; }
+.install-tablist { display: inline-flex; gap: 5px; margin: 2px 0 4px; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); }
+.install-tab { padding: 6px 16px; border: 0; border-radius: 7px; color: var(--muted); background: transparent; font-size: 13px; font-weight: 700; cursor: pointer; }
+.install-tab:hover { color: var(--ink); }
+.install-tab[aria-selected="true"] { color: #fff; background: var(--ink); }
+.install-tab:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.install-panel .tab-hint { margin: 0; font-size: 13px; }
+.install-panel pre { margin: 10px 0 0; }
 pre { position: relative; margin: 17px 0; padding: 20px 75px 20px 22px; overflow: auto; border-radius: 12px; color: #d6e4f3; background: #07111f; font-size: 13px; line-height: 1.7; }
 .copy-button { position: absolute; top: 12px; right: 12px; padding: 5px 9px; border: 1px solid #405168; border-radius: 6px; color: #bfcddd; background: #132238; cursor: pointer; }
 .copy-button:hover { color: #fff; border-color: #7aaeff; }
