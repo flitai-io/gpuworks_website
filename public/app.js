@@ -169,17 +169,20 @@ async function loadRelease() {
       "./gpuworks install",
     ].join("\n"));
     // The public sources (ADR 0040) carry the same archives under
-    // releases/<release_id>/; OSS is the default in the command, the hint
-    // above it names the OBS and R2 alternates.
-    const distDir = "https://gpuworks-dl.oss-cn-shanghai.aliyuncs.com/releases/" + (release.release_id || shortSha(release.commit));
-    text("server-install-command-public", [
-      "curl -fLO " + distDir + "/" + amd64.name,
-      "curl -fLO " + distDir + "/SHA256SUMS",
-      "sha256sum -c SHA256SUMS --ignore-missing",
-      "tar -xzf " + amd64.name,
-      "cd " + packageDir,
-      "./gpuworks install",
-    ].join("\n"));
+    // releases/<release_id>/; the domestic tab defaults to Aliyun OSS (the
+    // hint names the Huawei OBS alternate), the overseas tab to Cloudflare R2.
+    const cnDistDir = "https://gpuworks-dl.oss-cn-shanghai.aliyuncs.com/releases/" + (release.release_id || shortSha(release.commit));
+    const globalDistDir = "https://dl.gpuworks.ai/releases/" + (release.release_id || shortSha(release.commit));
+    for (const [id, distDir] of [["server-install-command-cn", cnDistDir], ["server-install-command-global", globalDistDir]]) {
+      text(id, [
+        "curl -fLO " + distDir + "/" + amd64.name,
+        "curl -fLO " + distDir + "/SHA256SUMS",
+        "sha256sum -c SHA256SUMS --ignore-missing",
+        "tar -xzf " + amd64.name,
+        "cd " + packageDir,
+        "./gpuworks install",
+      ].join("\n"));
+    }
   }
   return release;
 }

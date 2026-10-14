@@ -189,7 +189,8 @@
             <div class="install-tabs">
               <div class="install-tablist" role="tablist" aria-label="控制面下载来源">
                 <button class="install-tab" type="button" role="tab" id="source-tab-intranet" aria-controls="source-panel-intranet" aria-selected="true">内网下载</button>
-                <button class="install-tab" type="button" role="tab" id="source-tab-public" aria-controls="source-panel-public" aria-selected="false" tabindex="-1">公网下载</button>
+                <button class="install-tab" type="button" role="tab" id="source-tab-cn" aria-controls="source-panel-cn" aria-selected="false" tabindex="-1">国内公网下载</button>
+                <button class="install-tab" type="button" role="tab" id="source-tab-global" aria-controls="source-panel-global" aria-selected="false" tabindex="-1">海外公网下载</button>
               </div>
               <div class="install-panel" id="source-panel-intranet" role="tabpanel" aria-labelledby="source-tab-intranet">
                 <p class="tab-hint">从 <code>gpuworks.zstack.ai</code> 下载，仅公司内网可达。</p>
@@ -200,14 +201,23 @@ tar -xzf gpuworks-*.tar.gz
 cd gpuworks-*
 ./gpuworks install</code><button class="copy-button" data-copy="server-install-command">复制</button></pre>
               </div>
-              <div class="install-panel" id="source-panel-public" role="tabpanel" aria-labelledby="source-tab-public" hidden>
-                <p class="tab-hint">从公网对象存储下载，三个源目录树相同；命令默认用阿里云 OSS（境内快），可把域名换成华为云 OBS <code>gpuworks-dl.obs.cn-east-3.myhuaweicloud.com</code> 或 Cloudflare R2 <code>dl.gpuworks.ai</code>（海外）。</p>
-                <pre><code id="server-install-command-public">curl -fLO https://gpuworks-dl.oss-cn-shanghai.aliyuncs.com/releases/&lt;发布号&gt;/gpuworks-&lt;发布号&gt;-linux-amd64.tar.gz
+              <div class="install-panel" id="source-panel-cn" role="tabpanel" aria-labelledby="source-tab-cn" hidden>
+                <p class="tab-hint">从公网对象存储下载，境内主机直连；命令默认用阿里云 OSS，可把域名换成华为云 OBS <code>gpuworks-dl.obs.cn-east-3.myhuaweicloud.com</code>，内容相同。</p>
+                <pre><code id="server-install-command-cn">curl -fLO https://gpuworks-dl.oss-cn-shanghai.aliyuncs.com/releases/&lt;发布号&gt;/gpuworks-&lt;发布号&gt;-linux-amd64.tar.gz
 curl -fLO https://gpuworks-dl.oss-cn-shanghai.aliyuncs.com/releases/&lt;发布号&gt;/SHA256SUMS
 sha256sum -c SHA256SUMS --ignore-missing
 tar -xzf gpuworks-&lt;发布号&gt;-linux-amd64.tar.gz
 cd gpuworks-&lt;发布号&gt;-linux-amd64
-./gpuworks install</code><button class="copy-button" data-copy="server-install-command-public">复制</button></pre>
+./gpuworks install</code><button class="copy-button" data-copy="server-install-command-cn">复制</button></pre>
+              </div>
+              <div class="install-panel" id="source-panel-global" role="tabpanel" aria-labelledby="source-tab-global" hidden>
+                <p class="tab-hint">从 Cloudflare R2（<code>dl.gpuworks.ai</code>）下载，适合境外主机；目录树与国内源相同。</p>
+                <pre><code id="server-install-command-global">curl -fLO https://dl.gpuworks.ai/releases/&lt;发布号&gt;/gpuworks-&lt;发布号&gt;-linux-amd64.tar.gz
+curl -fLO https://dl.gpuworks.ai/releases/&lt;发布号&gt;/SHA256SUMS
+sha256sum -c SHA256SUMS --ignore-missing
+tar -xzf gpuworks-&lt;发布号&gt;-linux-amd64.tar.gz
+cd gpuworks-&lt;发布号&gt;-linux-amd64
+./gpuworks install</code><button class="copy-button" data-copy="server-install-command-global">复制</button></pre>
               </div>
             </div>
             <p class="step-note">install 默认装到 <code>/opt/gpuworks/server</code>：写出 systemd 单元（无 root 时退回后台进程）、启动并等到健康检查通过，然后打印访问地址和管理员密码；<code>--addr</code>、<code>--dir</code>、<code>--public-url</code> 等都可显式指定。默认不写固定地址（按请求 Host 三级解析），只有控制面必须对外声明域名时才传 <code>--public-url</code>。密码同时记录在数据目录的 <code>initial-credentials</code>（0664），登录后请改密并删除该文件。生产环境请通过反向代理启用 HTTPS。升级用 <code>gpuworks upgrade</code>：备份数据库与密钥后原地替换，探活失败自动回滚（仅重启服务一步需要 sudo）。</p>
@@ -217,16 +227,19 @@ cd gpuworks-&lt;发布号&gt;-linux-amd64
           <div class="step-number">2</div>
           <div class="step-body">
             <h3>在控制台创建节点</h3>
-            <p>打开控制面，进入「计算节点 → 添加节点」。系统会创建节点专属 token，并给出完整安装命令。token 不写在公共安装脚本里。</p>
+            <p>打开控制面，进入「计算节点 → 添加节点」。系统会创建节点专属 token，并给出完整的节点安装命令，复制到 GPU 节点执行即可。token 不写在公共安装脚本里。</p>
+            <p class="step-note">安装命令自动识别节点架构下载 agent；agent 默认主动外连控制面（WebSocket），不监听入站端口。有 Docker 时自动使用 Docker driver，无 root/daemon 的共享容器可回退到 udocker。</p>
           </div>
         </li>
         <li>
           <div class="step-number">3</div>
           <div class="step-body">
-            <h3>在 GPU 节点执行接入命令</h3>
-            <pre><code id="agent-install-command">curl -fsSL https://gpu.example.com/install.sh | sh -s -- \
-  --server https://gpu.example.com --token &lt;节点专属 token&gt;</code><button class="copy-button" data-copy="agent-install-command">复制</button></pre>
-            <p class="step-note">有 Docker 时自动使用 Docker driver；无 root/daemon 的共享容器可回退到 udocker。agent 默认主动外连，不监听入站端口。</p>
+            <h3>升级控制面与 agent</h3>
+            <p>控制台和 CLI 都能升级。默认从公网发布通道取包：三源并发竞速、ed25519 签名索引、按 sha256 校验；升级前自动备份，新版本探活失败自动回滚。内网环境可指回本站：</p>
+            <pre><code id="server-upgrade-command">gpuworks upgrade            # 公网发布通道（默认）
+gpuworks upgrade --base-url https://gpuworks.zstack.ai   # 内网发布站
+gpuworks upgrade --check    # 只看有没有新版，不做任何修改</code><button class="copy-button" data-copy="server-upgrade-command">复制</button></pre>
+            <p class="step-note">控制台的「设置 → 版本与更新」同样能升级：可从发布通道一键升级或上传发布包，并在正式发布版（release）/ 滚动预览版（nightly）渠道间切换，界面显示进度，失败自动回滚。agent 在节点页一键升级（「升级 Agent」），或重跑节点的 <code>/install.sh</code>，下载完成后原子替换。离线主机把发布包拷过去后用 <code>gpuworks upgrade --archive gpuworks-&lt;发布号&gt;-&lt;os&gt;-&lt;arch&gt;.tar.gz</code> 安装。</p>
           </div>
         </li>
       </ol>
