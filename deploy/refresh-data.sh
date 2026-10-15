@@ -154,112 +154,100 @@ else
   echo "no successful docs-build found for $ref; keeping current docs" >&2
 fi
 
-release_pair=$(jq -r '
+# The release archives of a pipeline come from several jobs: one per archive
+# since gpuworks MR !410 (each job's artifacts must stay under GitLab's size
+# limit), one per OS before it. The newest pipeline in which every job of
+# either set succeeded is the one to publish.
+release_jobs=$(jq -r '
   [
     .[] as $pipeline
-    | ([$pipeline.jobs[] | select(.name == "release-build" and .status == "success")][0] // null) as $linux
-    | ([$pipeline.jobs[] | select(.name == "release-build-macos" and .status == "success")][0] // null) as $macos
-    | select($linux != null and $macos != null)
-    | [$pipeline.id, $pipeline.sha, $linux.id, $macos.id]
+    | ([$pipeline.jobs[] | select(.status == "success")] | map({key: .name, value: .id}) | from_entries) as $ok
+    | ([
+        ["release-build-linux-amd64", "release-build-linux-arm64", "release-build-macos-amd64", "release-build-macos-arm64"],
+        ["release-build", "release-build-macos"]
+      ][] | select(all(.[]; $ok[.] != null))) as $names
+    | [$pipeline.id, $pipeline.sha, ($names | map($ok[.]) | join(" "))]
     | @tsv
   ][0] // empty
 ' "$work_dir/pipelines.json")
 
-if [ -n "$release_pair" ]; then
-  release_pipeline=$(printf '%s\n' "$release_pair" | cut -f1)
-  release_commit=$(printf '%s\n' "$release_pair" | cut -f2)
-  linux_job=$(printf '%s\n' "$release_pair" | cut -f3)
-  macos_job=$(printf '%s\n' "$release_pair" | cut -f4)
-  current_pair=""
+if [ -n "$release_jobs" ]; then
+  release_pipeline=$(printf '%s\n' "$release_jobs" | cut -f1)
+  release_commit=$(printf '%s\n' "$release_jobs" | cut -f2)
+  job_list=$(printf '%s\n' "$release_jobs" | cut -f3)
+  current_jobs=""
   if [ -f "$data_dir/release.json" ]; then
-    current_pair=$(jq -r '
-      if .job_ids.linux and .job_ids.macos
-      then "\(.job_ids.linux):\(.job_ids.macos)"
-      else empty
-      end
-    ' "$data_dir/release.json" 2>/dev/null || true)
+    current_jobs=$(jq -r '(.job_list // empty) | join(" ")' "$data_dir/release.json" 2>/dev/null || true)
   fi
 
-  if [ "$linux_job:$macos_job" != "$current_pair" ]; then
-    for release_os in linux macos; do
-      case "$release_os" in
-        linux) release_job=$linux_job ;;
-        macos) release_job=$macos_job ;;
-      esac
-      api_get "$api_base/jobs/$release_job" > "$work_dir/release-job-$release_os.json"
-      curl --config "$curl_config" \
-        "$api_base/jobs/$release_job/artifacts" > "$work_dir/artifacts-$release_os.zip"
-      mkdir -p "$work_dir/artifacts-$release_os"
-      unzip -q "$work_dir/artifacts-$release_os.zip" -d "$work_dir/artifacts-$release_os"
-      test -f "$work_dir/artifacts-$release_os/dist/release.json"
-      test -f "$work_dir/artifacts-$release_os/dist/SHA256SUMS"
-      jq empty "$work_dir/artifacts-$release_os/dist/release.json"
-    done
-
-    linux_release="$work_dir/artifacts-linux/dist/release.json"
-    macos_release="$work_dir/artifacts-macos/dist/release.json"
-    jq -e '.files | length == 2 and all(.os == "linux")' "$linux_release" >/dev/null
-    jq -e '.files | length == 2 and all(.os == "darwin")' "$macos_release" >/dev/null
-    linux_release_id=$(jq -r '.release_id' "$linux_release")
-    macos_release_id=$(jq -r '.release_id' "$macos_release")
-    linux_commit=$(jq -r '.commit' "$linux_release")
-    macos_commit=$(jq -r '.commit' "$macos_release")
-    if [ "$linux_release_id" != "$macos_release_id" ] || \
-       [ "$linux_commit" != "$macos_commit" ] || \
-       [ "$linux_commit" != "$release_commit" ]; then
-      echo "release artifact identity mismatch for pipeline $release_pipeline" >&2
-      exit 2
-    fi
-
+  if [ "$job_list" != "$current_jobs" ]; then
     mkdir -p "$work_dir/combined"
-    cat \
-      "$work_dir/artifacts-linux/dist/SHA256SUMS" \
-      "$work_dir/artifacts-macos/dist/SHA256SUMS" > "$work_dir/combined/SHA256SUMS"
-    jq -s '.[0] + {files: (.[0].files + .[1].files)}' \
-      "$linux_release" "$macos_release" > "$work_dir/combined/release.json"
-
-    jq -r '.files[].name' "$work_dir/combined/release.json" | while IFS= read -r filename; do
-      case "$filename" in
-        ""|*/*|*".."*) echo "unsafe artifact filename: $filename" >&2; exit 2 ;;
-      esac
-      source_file=""
-      for release_os in linux macos; do
-        candidate="$work_dir/artifacts-$release_os/dist/$filename"
-        if [ -f "$candidate" ]; then
-          source_file=$candidate
-          break
-        fi
+    : > "$work_dir/combined/SHA256SUMS"
+    for release_job in $job_list; do
+      job_dir="$work_dir/artifacts-$release_job"
+      api_get "$api_base/jobs/$release_job" > "$work_dir/release-job-$release_job.json"
+      curl --config "$curl_config" \
+        "$api_base/jobs/$release_job/artifacts" > "$job_dir.zip"
+      if unzip -Z1 "$job_dir.zip" | grep -Eq '(^/|(^|/)\.\.?(/|$))'; then
+        echo "unsafe path in release artifact from job $release_job" >&2
+        exit 2
+      fi
+      mkdir -p "$job_dir"
+      unzip -q "$job_dir.zip" -d "$job_dir"
+      test -f "$job_dir/dist/release.json"
+      test -f "$job_dir/dist/SHA256SUMS"
+      jq -e '.files | length >= 1' "$job_dir/dist/release.json" >/dev/null
+      # Every job built the same commit, which is the pipeline's.
+      job_commit=$(jq -r '.commit' "$job_dir/dist/release.json")
+      if [ "$job_commit" != "$release_commit" ]; then
+        echo "release artifact of job $release_job is from $job_commit, not $release_commit" >&2
+        exit 2
+      fi
+      cat "$job_dir/dist/SHA256SUMS" >> "$work_dir/combined/SHA256SUMS"
+      jq -r '.files[].name' "$job_dir/dist/release.json" | while IFS= read -r filename; do
+        case "$filename" in
+          ""|*/*|*".."*) echo "unsafe artifact filename: $filename" >&2; exit 2 ;;
+        esac
+        cp "$job_dir/dist/$filename" "$work_dir/combined/$filename"
       done
-      test -n "$source_file"
-      cp "$source_file" "$work_dir/combined/$filename"
     done
-    (cd "$work_dir/combined" && sha256sum -c SHA256SUMS)
+
+    # One manifest: the first job's, with every job's files, all of one
+    # release id and no archive twice.
+    set --
+    for release_job in $job_list; do
+      set -- "$@" "$work_dir/artifacts-$release_job/dist/release.json"
+    done
+    jq -s '
+      if (map(.release_id) | unique | length) != 1 then error("release ids differ across jobs") else . end
+      | .[0] + {files: (map(.files) | add)}
+      | if (.files | map(.name) | unique | length) != (.files | length) then error("an archive appears twice") else . end
+    ' "$@" > "$work_dir/combined/release.json"
+    (cd "$work_dir/combined" && sha256sum -c --quiet SHA256SUMS)
 
     jq -r '.files[].name' "$work_dir/combined/release.json" | while IFS= read -r filename; do
       install -m 0644 "$work_dir/combined/$filename" "$downloads_dir/$filename"
     done
     install -m 0644 "$work_dir/combined/SHA256SUMS" "$downloads_dir/SHA256SUMS"
 
-    linux_job_url=$(jq -r '.web_url' "$work_dir/release-job-linux.json")
-    macos_job_url=$(jq -r '.web_url' "$work_dir/release-job-macos.json")
+    first_job=${job_list%% *}
+    first_job_url=$(jq -r '.web_url' "$work_dir/release-job-$first_job.json")
     jq \
       --argjson pipeline_id "$release_pipeline" \
-      --argjson linux_job "$linux_job" \
-      --argjson macos_job "$macos_job" \
-      --arg linux_job_url "$linux_job_url" \
-      --arg macos_job_url "$macos_job_url" \
+      --argjson first_job "$first_job" \
+      --arg first_job_url "$first_job_url" \
+      --arg job_list "$job_list" \
       --arg synced_at "$generated_at" \
       '. + {
         pipeline_id: $pipeline_id,
-        job_id: $linux_job,
-        job_url: $linux_job_url,
-        job_ids: {linux: $linux_job, macos: $macos_job},
-        job_urls: {linux: $linux_job_url, macos: $macos_job_url},
+        job_id: $first_job,
+        job_url: $first_job_url,
+        job_list: ($job_list | split(" ") | map(tonumber)),
         synced_at: $synced_at
       }' "$work_dir/combined/release.json" > "$work_dir/release-published.json"
     install -m 0644 "$work_dir/release-published.json" "$data_dir/release.json.new"
     mv "$data_dir/release.json.new" "$data_dir/release.json"
-    echo "published release pipeline $release_pipeline jobs $linux_job/$macos_job"
+    echo "published release pipeline $release_pipeline jobs $job_list"
   fi
 fi
 
