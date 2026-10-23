@@ -24,5 +24,5 @@ markup:
     style: github
 
 params:
-  repo_url: http://dev.zstack.io:9080/wei.wang/gpuworks
+  repo_url: http://dev.zstack.io:9080/wei.wang/gpuworks-artifacts
   repo_ref: master
