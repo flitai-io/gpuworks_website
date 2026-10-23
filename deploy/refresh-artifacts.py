@@ -4,7 +4,9 @@
 Runs on mirror1 from the gpuworks-site systemd timer (deploy/
 gpuworks-site-artifacts.timer). Pipeline:
 
-  1. list artifacts/ on git master via the GitLab tree API and diff against
+  1. list the artifacts repository (wei.wang/gpuworks-artifacts, checked out
+     as artifacts/ inside the gpuworks main repository) on master via the
+     GitLab tree API and diff against
      the last synced state (blob SHAs); fetch only changed files raw, or the
      whole repo archive on first run / very large diffs;
   2. stage the tree for Hugo: markdown rendered as pages (frontmatter status,
@@ -42,9 +44,13 @@ SITE_SRC = SITE_HOME / "artifacts-site"  # layouts/hugo.yaml/assets from this re
 
 GITLAB_URL = os.environ.get("GITLAB_URL", "").rstrip("/")
 GITLAB_TOKEN = os.environ.get("GITLAB_TOKEN", "")
+# artifacts/ is its own repository (files at its root); links from it to the
+# rest of the tree resolve against the main repository, where it is checked
+# out as SRC.
 PROJECT_PATH = os.environ.get("GITLAB_PROJECT_PATH", "wei.wang/gpuworks")
+ARTIFACTS_PROJECT_PATH = os.environ.get("ARTIFACTS_PROJECT_PATH", "wei.wang/gpuworks-artifacts")
 REF = os.environ.get("GITLAB_REF", "master")
-SRC = os.environ.get("ARTIFACTS_SOURCE_DIR", "artifacts")
+SRC = "artifacts"
 
 HUGO_VERSION = os.environ.get("HUGO_VERSION", "0.165.0")
 HUGO_MIRROR = os.environ.get("HUGO_MIRROR", "http://127.0.0.1:9000/gpuworks-mirror/hugo").rstrip("/")
@@ -53,8 +59,9 @@ HUGO_BIN = os.environ.get("HUGO_BIN", "")
 FULL_SYNC_THRESHOLD = int(os.environ.get("ARTIFACTS_FULL_SYNC_THRESHOLD", "150"))
 FETCH_WORKERS = int(os.environ.get("ARTIFACTS_FETCH_WORKERS", "8"))
 
-API_BASE = f"{GITLAB_URL}/api/v4/projects/{urllib.parse.quote(PROJECT_PATH, safe='')}"
+API_BASE = f"{GITLAB_URL}/api/v4/projects/{urllib.parse.quote(ARTIFACTS_PROJECT_PATH, safe='')}"
 BLOB_URL_BASE = f"{GITLAB_URL}/{PROJECT_PATH}/-/blob/{REF}"
+ARTIFACTS_BLOB_URL_BASE = f"{GITLAB_URL}/{ARTIFACTS_PROJECT_PATH}/-/blob/{REF}"
 PAGE_SIZE = 100
 
 MD_EXT = ".md"
@@ -98,9 +105,8 @@ def api_json(path):
 
 
 def raw_file_url(rel):
-    """rel is relative to artifacts/; the files API wants repo-root paths."""
-    repo_path = f"{SRC}/{rel}" if rel else SRC
-    return f"{API_BASE}/repository/files/{urllib.parse.quote(repo_path, safe='')}/raw?ref={urllib.parse.quote(REF, safe='')}"
+    """rel is relative to the artifacts repository root."""
+    return f"{API_BASE}/repository/files/{urllib.parse.quote(rel, safe='')}/raw?ref={urllib.parse.quote(REF, safe='')}"
 
 
 def list_tree():
@@ -109,11 +115,10 @@ def list_tree():
     page = 1
     while True:
         entries = api_json(
-            f"/repository/tree?path={urllib.parse.quote(SRC, safe='')}"
-            f"&recursive=true&per_page={PAGE_SIZE}&page={page}"
+            f"/repository/tree?recursive=true&per_page={PAGE_SIZE}&page={page}"
         )
         for entry in entries:
-            rel = entry["path"][len(SRC) + 1:]
+            rel = entry["path"]
             if entry["type"] == "tree":
                 dirs.add(rel)
                 continue
@@ -222,14 +227,11 @@ def sync_full_archive(tree_dir, blobs_all, excluded):
                 if len(parts) != 2 or not parts[1]:
                     continue  # top-level directory entry or global header
                 rel = parts[1]
-                if not (rel == SRC or rel.startswith(SRC + "/")):
-                    continue
                 if member.isdir():
                     continue
                 if not member.isfile():
                     log(f"skip non-regular archive member {member.name}")
                     continue
-                rel = rel[len(SRC) + 1:]
                 if rel in excluded:
                     continue
                 data = tar.extractfile(member).read()
@@ -280,7 +282,7 @@ class Stager:
         if not rel:
             return "/artifacts/"
         if rel in self.excluded:
-            return f"{BLOB_URL_BASE}/{SRC}/{rel}"
+            return f"{ARTIFACTS_BLOB_URL_BASE}/{rel}"
         if rel in self.dirs_used:
             return f"/artifacts/{rel}/"
         if rel in self.md:
@@ -293,7 +295,7 @@ class Stager:
                 # would collide with the directory's section page (dir/index.html)
                 return f"/artifacts/f/{rel}"
             return f"/artifacts/{rel}"
-        return f"{BLOB_URL_BASE}/{SRC}/{rel}"
+        return f"{ARTIFACTS_BLOB_URL_BASE}/{rel}"
 
     def blob_url(self, repo_path):
         return f"{BLOB_URL_BASE}/{repo_path}"
@@ -638,7 +640,7 @@ def generate_wrappers(public, stager):
                 rel=rel,
                 size=size,
                 raw_url=f"/artifacts/f/{rel}",
-                repo_url=f"{BLOB_URL_BASE}/{SRC}/{rel}",
+                repo_url=f"{ARTIFACTS_BLOB_URL_BASE}/{rel}",
             ),
             encoding="utf-8",
         )
@@ -770,7 +772,7 @@ def main():
     tree_dir = WORK_ROOT / "tree"
     tree_dir.mkdir(parents=True, exist_ok=True)
 
-    log(f"listing {SRC}/ on {PROJECT_PATH}@{REF}")
+    log(f"listing {ARTIFACTS_PROJECT_PATH}@{REF}")
     blobs, dirs = list_tree()
     log(f"tree: {len(blobs)} file(s), {len(dirs)} dir(s)")
     excluded = fetch_ignore(blobs)
