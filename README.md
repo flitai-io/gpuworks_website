@@ -1,12 +1,16 @@
 # gpuworks_website
 
-GPUWorks 的独立发布网站，线上地址为 <https://gpuworks.zstack.ai>。
+GPUWorks 的公开文档站在 Read the Docs：<https://gpuworks.readthedocs.io/>（默认显示最新正式版 `stable`，
+另有跟随 master 的 `latest` 与各版本 tag）。它由 Read the Docs 从公开仓库
+[flitai-io/gpuworks](https://github.com/flitai-io/gpuworks) 的 `docs/`、`docs-en/` 构建，主题取自本仓库的 `oink/`。
+
+本仓库另外承载 GPUWorks 的内网发布站 <https://gpuworks.zstack.ai>（仅公司内网可达）：CI 状态、内网下载与文档镜像。
 
 ## 目录
 
 - `public/`：静态页面、样式、脚本与真实产品截图。
 - `deploy/`：Caddy 配置、GitLab 数据/制品刷新脚本和 systemd timer。
-- `public/docs/`：由 GPUWorks 仓库的 `docs-build` 成功制品生成，本站不手工编辑其中的页面。
+- `public/docs/`：内网站点的文档镜像，由 GPUWorks 仓库的 `docs-build` 成功制品生成，本站不手工编辑其中的页面；对外请链接 Read the Docs。
 
 CI 状态由 mirror1 每 5 分钟从 `wei.wang/gpuworks` 的 GitLab API 刷新。下载区只同步最新一个
 发布 job 全部成功的 master pipeline——四个按包拆分的 `release-build-{linux,macos}-{amd64,arm64}`，
@@ -21,7 +25,8 @@ CI 状态由 mirror1 每 5 分钟从 `wei.wang/gpuworks` 的 GitLab API 刷新�
 
 `oink/` 是文档站主题，源镜像自 <https://github.com/pgsty/oink>（v1.0.0），因 CI runner 无
 github.com 出网而托管在此。GPUWorks 仓库 `docs-site/build.sh` 在构建时克隆本仓库并使用
-`oink/` 作为 hugo theme 目录（`theme: oink`），gpuworks 仓库本身不再 vendor 主题文件。
+`oink/` 作为 hugo theme 目录（`theme: oink`），gpuworks 仓库本身不再 vendor 主题文件。内网 CI 从 GitLab 克隆；
+Read the Docs 通过项目环境变量 `WEBSITE_REPO` 克隆公开镜像 <https://github.com/flitai-io/gpuworks_website>。
 
-更新主题：在有公网的机器上从上游 release 拷贝新版覆盖 `oink/` 后提交；docs-build 跟随本仓库
-master 构建即生效。
+更新主题：在有公网的机器上从上游 release 拷贝新版覆盖 `oink/` 后提交；docs-build 与 Read the Docs
+跟随本仓库 master 构建即生效（Read the Docs 要等 GitLab 推送镜像同步到 GitHub 后的下一次构建）。
