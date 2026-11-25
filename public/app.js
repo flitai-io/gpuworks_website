@@ -135,7 +135,7 @@ async function loadRelease() {
   const response = await fetch("/data/release.json", { cache: "no-store" });
   if (!response.ok) throw new Error("release metadata: " + response.status);
   const release = await response.json();
-  text("release-id", "构建 " + (release.release_id || shortSha(release.commit)));
+  text("release-id", "预览版：构建 " + (release.release_id || shortSha(release.commit)));
   const build = formatDate(release.build_at);
   const job = release.job_id ? " · CI job #" + release.job_id : "";
   text("release-detail", "commit " + shortSha(release.commit) + " · " + build + job);
@@ -185,6 +185,97 @@ async function loadRelease() {
     }
   }
   return release;
+}
+
+const PLATFORM_LABELS = {
+  "linux/amd64": "Linux amd64",
+  "linux/arm64": "Linux arm64",
+  "darwin/amd64": "macOS Intel",
+  "darwin/arm64": "macOS Apple Silicon",
+};
+
+function element(tag, className, content) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (content != null) node.textContent = content;
+  return node;
+}
+
+function fileList(directory, files) {
+  const list = element("ul", "release-files");
+  (files || []).forEach(function (file) {
+    const item = element("li");
+    const anchor = element("a", "release-file");
+    anchor.href = directory + encodeURIComponent(file.name);
+    anchor.title = "SHA-256 " + file.sha256;
+    anchor.append(element("span", null, PLATFORM_LABELS[file.os + "/" + file.arch] || (file.os + " " + file.arch)));
+    anchor.append(element("small", null, formatBytes(Number(file.size))));
+    item.append(anchor);
+    list.append(item);
+  });
+  return list;
+}
+
+function releaseBuildBlock(kind, title, meta, checksums, directory, files) {
+  const block = element("div", "release-build");
+  const head = element("div", "release-build-head");
+  const label = element("div", "release-build-title");
+  label.append(element("span", "build-kind " + kind, kind === "tag" ? "正式版" : "分支构建"));
+  label.append(element("strong", null, title));
+  label.append(element("span", "line-meta", meta));
+  head.append(label);
+  if (checksums) {
+    const sums = element("a", "line-sums", "SHA256SUMS");
+    sums.href = checksums;
+    head.append(sums);
+  }
+  block.append(head);
+  if (files) block.append(fileList(directory, files));
+  return block;
+}
+
+function releaseLineCard(line) {
+  const card = element("article", "release-line");
+  const head = element("div", "release-line-title");
+  head.append(element("span", "line-name", "v" + line.line));
+  if (line.branch) {
+    head.append(element("span", "line-meta", line.branch.name + " 最新提交 " + shortSha(line.branch.commit) +
+      " · " + formatDate(line.branch.committed_at)));
+  }
+  card.append(head);
+
+  const latest = line.latest;
+  if (latest) {
+    card.append(releaseBuildBlock("tag", latest.name,
+      "commit " + shortSha(latest.commit) + " · " + formatDate(latest.committed_at) + " · 本线共 " + line.tag_count + " 个 tag",
+      latest.checksums, "/downloads/" + encodeURIComponent(latest.name) + "/", latest.files));
+  } else {
+    card.append(releaseBuildBlock("tag", "尚无正式版", "打出第一个 tag 后自动出现", null, null, null));
+  }
+
+  const build = line.branch_build;
+  if (build) {
+    let meta = "commit " + shortSha(build.commit) + " · " + formatDate(build.build_at) + " · pipeline #" + build.pipeline_id;
+    if (line.branch && build.commit !== line.branch.commit) meta += " · 分支最新提交尚无成功构建";
+    card.append(releaseBuildBlock("branch", "构建 " + build.release_id, meta, build.checksums, build.directory, build.files));
+  } else if (line.branch) {
+    card.append(releaseBuildBlock("branch", "暂无构建", "该分支还没有四个构建 job 全部成功的流水线", null, null, null));
+  }
+  return card;
+}
+
+async function loadReleaseLines() {
+  const container = document.getElementById("release-lines");
+  if (!container) return;
+  const response = await fetch("/data/releases.json", { cache: "no-store" });
+  if (!response.ok) throw new Error("release lines: " + response.status);
+  const data = await response.json();
+  const lines = Array.isArray(data.lines) ? data.lines : [];
+  container.textContent = "";
+  lines.forEach(function (line) { container.append(releaseLineCard(line)); });
+  if (!lines.length) container.append(element("p", "line-empty", "还没有版本线。"));
+  const released = lines.filter(function (line) { return line.latest; }).length;
+  text("stable-detail", lines.length + " 条版本线，" + released + " 条已发布 · 同步于 " + formatDate(data.generated_at));
 }
 
 function selectInstallTab(tab) {
@@ -334,6 +425,12 @@ function setupCopyButtons() {
 }
 
 async function refresh() {
+  try {
+    await loadReleaseLines();
+  } catch (error) {
+    console.warn(error);
+    text("stable-detail", "版本线数据暂不可用，请稍后刷新");
+  }
   let release = null;
   try {
     release = await loadRelease();
