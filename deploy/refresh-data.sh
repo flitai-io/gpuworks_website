@@ -252,3 +252,7 @@ if [ -n "$release_jobs" ]; then
 fi
 
 echo "refreshed $pipeline_count pipelines at $generated_at"
+
+# Formal releases come from version tags, not master pipelines; a failure there
+# leaves the CI data above already refreshed.
+"$(dirname "$0")/refresh-releases.sh"

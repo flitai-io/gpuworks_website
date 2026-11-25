@@ -141,9 +141,16 @@
     <section class="section" id="download">
       <div class="section-heading">
         <div><span class="kicker">可校验的构建产物</span><h2>下载 GPUWorks</h2></div>
-        <p>当前为预览发布通道。每次 master 核心门禁通过后自动构建，mirror1 只同步成功 job 的产物。</p>
+        <p>每条版本线（release/YY.M 分支）列出最新正式版 tag 与分支最新一次构建；预览版是 master 每次核心门禁通过后的自动构建。mirror1 只同步校验通过的产物。</p>
       </div>
-      <div class="release-panel">
+      <div class="release-panel stable-panel">
+        <div class="release-meta">
+          <span class="channel stable">RELEASE</span>
+          <div><strong>版本线</strong><span id="stable-detail">读取版本线…</span></div>
+        </div>
+        <div class="release-lines" id="release-lines" aria-live="polite"></div>
+      </div>
+      <div class="release-panel preview-panel">
         <div class="release-meta">
           <span class="channel">PREVIEW</span>
           <div><strong id="release-id">读取发布信息…</strong><span id="release-detail">正在核对构建元数据</span></div>
@@ -172,7 +179,7 @@
         </div>
         <div class="checksum-row"><a id="checksum-link" href="/downloads/SHA256SUMS">下载 SHA256SUMS</a><span>server 包已内嵌 Linux amd64 / arm64 agent，无需另找节点安装包。</span></div>
       </div>
-      <aside class="truth-note"><strong>发布口径</strong><p>仓库目前没有语义化 tag 或 GitLab Release，本站不会把 commit 构建伪装成“稳定版”。生产采用前请按你的 GPU、驱动、镜像和网络环境完成验收。</p></aside>
+      <aside class="truth-note"><strong>发布口径</strong><p>正式版是 <code>vYY.M.PATCH</code> tag 的构建，包与 SHA256SUMS 取自公开发布源（阿里云 OSS）并逐个校验；分支构建是发布分支最新提交的 CI 构建，含尚未打 tag 的修复；预览版是 master 的 commit 构建。分支构建与预览版都不等同于正式版。生产采用前请按你的 GPU、驱动、镜像和网络环境完成验收。</p></aside>
     </section>
 
     <section class="section" id="install">
